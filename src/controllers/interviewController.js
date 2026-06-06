@@ -3,7 +3,11 @@ const prisma = require("../config/db");
 
 const {
   generateQuestions,
-}=require("../services/geminiService");
+}=require("../services/groqService");
+
+const {
+  evaluateAnswer,
+} = require("../services/evaluateAnswerService");
 
 const createInterview = async (req, res) => {
   try {
@@ -103,22 +107,77 @@ const deleteInterview = async (req, res) => {
   }
 };
 
-const generateInterviewQuestions =  async(req,res)=>{
-  try{
-    const { role,difficulty}=req.body;
+const generateInterviewQuestions = async (req, res) => {
+  try {
+    const { title, role, difficulty } = req.body;
 
-    const questions= await generateQuestions(
+    const questionsText = await generateQuestions(
       role,
       difficulty
     );
 
-    res.status(200).json({
-      questions,
+    const questionsArray = questionsText
+      .split("\n")
+      .filter((q) => q.trim() !== "");
+
+    const interview = await prisma.interview.create({
+      data: {
+        title,
+        role,
+        difficulty,
+        questions: questionsArray,
+        userId: req.user.id,
+      },
     });
 
-  } catch(error){
+    res.status(201).json(interview);
+
+  } catch (error) {
     res.status(500).json({
-      message:error.message,
+      message: error.message,
+    });
+  }
+};
+
+const submitAnswer = async (req, res) => {
+  try {
+    const { question, answer } = req.body;
+    const interviewId = parseInt(req.params.id);
+
+    const interview = await prisma.interview.findFirst({
+      where: {
+        id: interviewId,
+        userId: req.user.id,
+      },
+    });
+
+    if (!interview) {
+      return res.status(404).json({
+        message: "Interview not found",
+      });
+    }
+
+    // Evaluate the answer using AI
+const evaluation = await evaluateAnswer(
+  question,
+  answer
+);
+
+// Save answer along with AI evaluation
+const savedAnswer = await prisma.answer.create({
+  data: {
+    question,
+    answer,
+    feedback: evaluation,
+    interviewId,
+  },
+});
+
+res.status(201).json(savedAnswer);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
     });
   }
 };
@@ -129,4 +188,5 @@ module.exports = {
   getInterviewById,
   deleteInterview,
   generateInterviewQuestions,
+  submitAnswer,
 };

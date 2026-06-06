@@ -23,9 +23,27 @@ model Interview {
   role        String
   difficulty  String
 
+  questions   Json?
+
+  answers     Answer[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   userId      Int
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model Answer {
+  id          Int       @id @default(autoincrement())
+
+  question    String
+  answer      String
+  feedback    String?
+  score       Int?
+
+  interviewId Int
+  interview   Interview @relation(fields: [interviewId], references: [id])
+
+  createdAt   DateTime @default(now())
 }

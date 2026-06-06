@@ -1,16 +1,24 @@
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+const genAI = new GoogleGenerativeAI(
+  process.env.GEMINI_API_KEY
+);
+
 const generateQuestions = async (role, difficulty) => {
-  return [
-    `Tell me about yourself.`,
-    `Why do you want to work as a ${role}?`,
-    `What projects have you worked on?`,
-    `Explain Object-Oriented Programming.`,
-    `What is polymorphism?`,
-    `What is inheritance?`,
-    `How do you debug code?`,
-    `Describe a challenging problem you solved.`,
-    `What are your strengths and weaknesses?`,
-    `Why should we hire you?`,
-  ];
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+  });
+
+  const prompt = `
+Generate 10 interview questions for a ${role} position.
+Difficulty: ${difficulty}.
+
+Return only a numbered list of questions.
+`;
+
+  const result = await model.generateContent(prompt);
+
+  return result.response.text();
 };
 
 module.exports = {

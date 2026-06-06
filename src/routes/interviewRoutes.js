@@ -9,6 +9,7 @@ const {
   getInterviewById,
   deleteInterview,
   generateInterviewQuestions,
+  submitAnswer,
 } = require("../controllers/interviewController");
 
 router.post("/", protect, createInterview);
@@ -20,4 +21,5 @@ router.post(
    protect,
    generateInterviewQuestions
 );
+router.post("/:id/answers", protect, submitAnswer);
 module.exports = router;
