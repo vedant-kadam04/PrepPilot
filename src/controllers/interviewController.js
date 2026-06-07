@@ -158,22 +158,112 @@ const submitAnswer = async (req, res) => {
     }
 
     // Evaluate the answer using AI
-const evaluation = await evaluateAnswer(
-  question,
-  answer
-);
+// Evaluate the answer using AI
+const evaluation = await evaluateAnswer(question, answer);
+
+// Convert AI response (JSON string) into an object
+const parsedEvaluation = JSON.parse(evaluation);
 
 // Save answer along with AI evaluation
 const savedAnswer = await prisma.answer.create({
   data: {
     question,
     answer,
-    feedback: evaluation,
+    score: parsedEvaluation.score,
+    feedback: parsedEvaluation.feedback,
+    improvement: parsedEvaluation.improvement,
     interviewId,
   },
 });
 
 res.status(201).json(savedAnswer);
+
+
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+const getInterviewReport = async (req, res) => {
+  try {
+    const interviewId = parseInt(req.params.id);
+
+    const interview = await prisma.interview.findFirst({
+      where: {
+        id: interviewId,
+        userId: req.user.id,
+      },
+      include: {
+        answers: true,
+      },
+    });
+
+    if (!interview) {
+      return res.status(404).json({
+        message: "Interview not found",
+      });
+    }
+    
+    const totalQuestions=interview.questions
+       ? interview.question.length
+       :0;
+    const totalAnswers = interview.answers.length;
+
+const validScores = interview.answers.filter(
+  (answer) => answer.score !== null
+);
+
+const averageScore =
+  validScores.length > 0
+    ? Number( (
+        validScores.reduce(
+          (sum, answer) => sum + answer.score,
+          0
+        ) / validScores.length
+      ).toFixed(2)
+    )
+    : 0;
+
+const highestScore =
+  validScores.length > 0
+    ? Math.max(...validScores.map((a) => a.score))
+    : 0;
+
+const lowestScore =
+  validScores.length > 0
+    ? Math.min(...validScores.map((a) => a.score))
+    : 0;
+
+let performance;
+
+if (averageScore >= 8.5) {
+  performance = "Excellent";
+} else if (averageScore >= 7) {
+  performance = "Good";
+} else if (averageScore >= 5) {
+  performance = "Average";
+} else {
+  performance = "Needs Improvement";
+}    
+
+res.status(200).json({
+  interviewId: interview.id,
+  title: interview.title,
+  role: interview.role,
+  difficulty: interview.difficulty,
+
+  totalQuestions,
+  totalAnswers,
+  averageScore,
+  highestScore,
+  lowestScore,
+  performance,
+  
+  answers: interview.answers,
+});
 
   } catch (error) {
     res.status(500).json({
@@ -189,4 +279,5 @@ module.exports = {
   deleteInterview,
   generateInterviewQuestions,
   submitAnswer,
+  getInterviewReport,
 };

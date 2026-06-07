@@ -19,16 +19,21 @@ ${question}
 Candidate Answer:
 ${answer}
 
-Evaluate the answer and return ONLY in this format:
+Evaluate the answer and return ONLY valid JSON in this exact format:
 
-Score: <number out of 10>
+{
+  "score": 8,
+  "feedback": "Short feedback",
+  "improvement": "Short improvement suggestion"
+}
 
-Feedback:
-<one short paragraph>
-
-Improvement:
-<one short paragraph>
-        `,
+Rules:
+- score must be an integer between 1 and 10
+- Return ONLY JSON
+- Do not use markdown
+- Do not use \`\`\`
+- Do not add any explanation outside the JSON
+`,
       },
     ],
   });

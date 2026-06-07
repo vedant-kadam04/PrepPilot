@@ -39,8 +39,10 @@ model Answer {
 
   question    String
   answer      String
-  feedback    String?
+
   score       Int?
+  feedback    String?
+  improvement String? 
 
   interviewId Int
   interview   Interview @relation(fields: [interviewId], references: [id])
