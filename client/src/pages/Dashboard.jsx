@@ -2,10 +2,13 @@ import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/context";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar/Navbar";
+import "./Dashboard.css";
 
 function Dashboard() {
   const { user } = useContext(AuthContext);
   const [interviews, setInterviews] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
@@ -21,6 +24,7 @@ function Dashboard() {
   };
 
   const handleGenerate = async () => {
+    setLoading(true);
     try {
       const response = await api.post(
         "/interviews/generate-questions",
@@ -39,6 +43,8 @@ function Dashboard() {
       } else {
         console.log(error.message);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,74 +73,96 @@ function Dashboard() {
   }, []);
 
   return (
-    <div
-      style={{
-        width: "800px",
-        margin: "50px auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "15px",
-      }}
-    >
-      <h1>DashBoard</h1>
+    <>
+      <Navbar />
+      <div className="stats-container">
+        <div className="stat-card">
+          <div className="stat-icon">📋</div>
 
-      <h2>Welcome, {user ? user.name : "User"}</h2>
+          <h2>{interviews.length}</h2>
 
-      <h3>Create Interview</h3>
+          <h4>Total Interviews</h4>
 
-      <input
-        type="text"
-        name="title"
-        placeholder="Interview Title"
-        value={formData.title}
-        onChange={handleChange}
-      />
+          <p>Practice sessions created</p>
+        </div>
 
-      <input
-        type="text"
-        name="role"
-        placeholder="Role"
-        value={formData.role}
-        onChange={handleChange}
-      />
+        <div className="stat-card">
+          <div className="stat-icon">📚</div>
 
-      <select
-        name="difficulty"
-        value={formData.difficulty}
-        onChange={handleChange}
-      >
-        <option>Easy</option>
-        <option>Medium</option>
-        <option>Hard</option>
-      </select>
+          <h2>{interviews.length}</h2>
 
-      <button type="button" onClick={handleGenerate}>
-        Generate Interview
-      </button>
+          <h4>Interview History</h4>
 
-      <h3>Previous Interviews</h3>
+          <p>Your previous mock interviews</p>
+        </div>
+      </div>
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <h1>Welcome back, {user ? user.name : "User"} 👋</h1>
 
-      {interviews.map((interview) => (
-        <div
-          key={interview.id}
-          style={{
-            border: "1px solid gray",
-            padding: "10px",
-            marginBottom: "10px",
-          }}
-        >
-          <h4>{interview.title}</h4>
+          <p>
+            Practice AI-powered interviews and sharpen your technical skills.
+          </p>
+        </div>
+        <div className="create-card">
+          <h3>Create Interview</h3>
 
-          <p>{interview.role}</p>
+          <input
+            type="text"
+            name="title"
+            placeholder="Interview Title"
+            value={formData.title}
+            onChange={handleChange}
+          />
 
-          <p>{interview.difficulty}</p>
+          <input
+            type="text"
+            name="role"
+            placeholder="Role"
+            value={formData.role}
+            onChange={handleChange}
+          />
 
-          <button onClick={() => navigate(`/interview/${interview.id}`)}>
-            View
+          <select
+            name="difficulty"
+            value={formData.difficulty}
+            onChange={handleChange}
+          >
+            <option>Easy</option>
+            <option>Medium</option>
+            <option>Hard</option>
+          </select>
+
+          <button type="button" onClick={handleGenerate} disabled={loading}>
+            {loading ? "Generating..." : "Generate Interview"}
           </button>
         </div>
-      ))}
-    </div>
+        <h2 className="section-title">History</h2>
+
+        {interviews.map((interview) => (
+          <div className="interview-card" key={interview.id}>
+            <div className="interview-info">
+              <h3>{interview.title}</h3>
+
+              <p>{interview.role}</p>
+
+              <span
+                className={`difficulty-badge ${interview.difficulty.toLowerCase()}`}
+              >
+                {interview.difficulty}
+              </span>
+            </div>
+
+            <button
+              className="view-btn"
+              onClick={() => navigate(`/interview/${interview.id}`)}
+            >
+              View →
+            </button>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 export default Dashboard;
