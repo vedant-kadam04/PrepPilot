@@ -208,7 +208,7 @@ const getInterviewReport = async (req, res) => {
     }
     
     const totalQuestions=interview.questions
-       ? interview.question.length
+       ? interview.questions.length
        :0;
     const totalAnswers = interview.answers.length;
 
